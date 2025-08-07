@@ -1,0 +1,21 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome to EcommerceStore</h1>
+    <p>Your one-stop shop for all products.</p>
+
+    <!-- ✅ Login Button -->
+    @if (!User.Identity.IsAuthenticated)
+    {
+        <a asp-area="Identity" asp-page="/Account/Login" class="btn btn-primary btn-lg mt-3">
+            Login
+        </a>
+    }
+    else
+    {
+        <p class="mt-3">Hello, @User.Identity.Name!</p>
+        <a asp-area="Identity" asp-page="/Account/Logout" class="btn btn-danger btn-lg mt-2">Logout</a>
+    }
+</div>

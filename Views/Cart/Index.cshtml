@@ -1,0 +1,63 @@
+﻿@model EcommerceStore.Models.Cart
+@{
+    ViewData["Title"] = "My Cart";
+    var total = Model.Items.Sum(i => (i.Product.DiscountPrice ?? i.Product.Price) * i.Quantity);
+}
+
+<h2>My Cart</h2>
+
+@if (!Model.Items.Any())
+{
+    <div class="alert alert-info">Your cart is empty.</div>
+}
+else
+{
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Subtotal</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Items)
+            {
+                var price = item.Product.DiscountPrice ?? item.Product.Price;
+                <tr>
+                    <td>@item.Product.Name</td>
+                    <td>
+                        @if (item.Product.DiscountPrice != null)
+                        {
+                            <span class="text-danger fw-bold">@((item.Product.DiscountPrice.Value).ToString("C"))</span>
+                            <br />
+                            <small class="text-muted text-decoration-line-through">@item.Product.Price.ToString("C")</small>
+                        }
+                        else
+                        {
+                            <span>@(item.Product.Price.ToString("C"))</span>
+                        }
+                    </td>
+                    <td>
+                        <form asp-action="UpdateQuantity" method="post" class="d-inline">
+                            <input type="hidden" name="itemId" value="@item.Id" />
+                            <input type="number" name="quantity" value="@item.Quantity" min="1" class="form-control d-inline" style="width: 70px;" />
+                            <button type="submit" class="btn btn-sm btn-primary">Update</button>
+                        </form>
+                    </td>
+                    <td>@((price * item.Quantity).ToString("C"))</td>
+                    <td>
+                        <a asp-action="Remove" asp-route-id="@item.Id" class="btn btn-danger btn-sm">Remove</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <h4 class="text-end">Total: <span class="fw-bold">@total.ToString("C")</span></h4>
+    <div class="text-end mt-3">
+        <a asp-action="Checkout" class="btn btn-success btn-lg">Proceed to Checkout</a>
+    </div>
+}

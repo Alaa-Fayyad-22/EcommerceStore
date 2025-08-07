@@ -1,0 +1,83 @@
+﻿@model IEnumerable<EcommerceStore.Models.Order>
+@{
+    ViewData["Title"] = "My Orders";
+}
+
+<h2 class="mb-4">My Orders</h2>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        You have not placed any orders yet.
+    </div>
+}
+else
+{
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>Order #</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Total</th>
+                <th>Shipping Address</th>
+                <th>Items</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var order in Model)
+            {
+                <tr>
+                    <td>@order.Id</td>
+                    <td>@order.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>
+                        <span class="badge
+                            @(order.Status == "Pending" ? "bg-warning text-dark" :
+                              order.Status == "Processing" ? "bg-info text-dark" :
+                              order.Status == "Shipped" ? "bg-primary" :
+                              order.Status == "Delivered" ? "bg-success" : "bg-danger")">
+                            @order.Status
+                        </span>
+                    </td>
+                    <td>@order.TotalAmount.ToString("C")</td>
+                    <td>@order.ShippingAddress</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-secondary"
+                                type="button"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#order-@order.Id"
+                                aria-expanded="false"
+                                aria-controls="order-@order.Id">
+                            View Items
+                        </button>
+                    </td>
+                </tr>
+                <tr class="collapse" id="order-@order.Id">
+                    <td colspan="6">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Price</th>
+                                    <th>Quantity</th>
+                                    <th>Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in order.OrderItems)
+                                {
+                                    <tr>
+                                        <td>@item.Product.Name</td>
+                                        <td>@item.Price.ToString("C")</td>
+                                        <td>@item.Quantity</td>
+                                        <td>@(item.Price * item.Quantity).ToString("C")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

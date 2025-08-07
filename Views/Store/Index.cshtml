@@ -1,0 +1,211 @@
+﻿@model IEnumerable<EcommerceStore.Models.Product>
+@{
+    ViewData["Title"] = "Store";
+    var wishlistIds = ViewBag.WishlistIds as List<int> ?? new List<int>();
+    var categories = ViewBag.Categories as List<EcommerceStore.Models.Category> ?? new List<EcommerceStore.Models.Category>();
+
+    var query = ViewContext.HttpContext.Request.Query; // ✅ Correct way to access query params
+}
+
+<h2 class="mb-4 text-center">Our Products</h2>
+
+<!-- 🔎 Search & Filter Form -->
+<form method="get" class="mb-4">
+    <div class="row g-3 align-items-end">
+        <!-- Search Bar -->
+        <div class="col-md-4">
+            <label class="form-label fw-bold">Search</label>
+            <input type="text" name="search" value="@query["search"]" class="form-control" placeholder="Search products...">
+        </div>
+
+        <!-- Category Dropdown -->
+        <div class="col-md-3">
+            <label class="form-label fw-bold">Category</label>
+            <select name="categoryId" class="form-select">
+                <option value="">All Categories</option>
+                @foreach (var cat in categories)
+                {
+                    <option value="@cat.Id" selected="@(query["categoryId"] == cat.Id.ToString())">
+                        @cat.Name
+                    </option>
+                }
+            </select>
+        </div>
+
+        <!-- Min Price -->
+        <div class="col-md-2">
+            <label class="form-label fw-bold">Min Price</label>
+            <input type="number" name="minPrice" value="@query["minPrice"]" class="form-control" placeholder="0">
+        </div>
+
+        <!-- Max Price -->
+        <div class="col-md-2">
+            <label class="form-label fw-bold">Max Price</label>
+            <input type="number" name="maxPrice" value="@query["maxPrice"]" class="form-control" placeholder="1000">
+        </div>
+
+        <!-- Sorting -->
+        <div class="col-md-3 mt-3">
+            <label class="form-label fw-bold">Sort By</label>
+            <select name="sort" class="form-select">
+                <option value="">Default</option>
+                <option value="price_asc" selected="@(query["sort"] == "price_asc")">Price: Low to High</option>
+                <option value="price_desc" selected="@(query["sort"] == "price_desc")">Price: High to Low</option>
+                <option value="newest" selected="@(query["sort"] == "newest")">Newest</option>
+            </select>
+        </div>
+
+        <!-- Apply Button -->
+        <div class="col-md-2 mt-3">
+            <button type="submit" class="btn btn-primary w-100">Apply</button>
+        </div>
+    </div>
+</form>
+
+<hr />
+<h3 class="mt-4 mb-3 text-center text-danger">🔥 Best Sellers</h3>
+<div id="bestSellersCarousel" class="carousel slide" data-bs-ride="carousel">
+    <!-- Carousel Inner -->
+    <div class="carousel-inner">
+        @{
+            var bestSellers = ViewBag.BestSellers as List<EcommerceStore.Models.Product>;
+            int total = bestSellers.Count;
+            int itemsPerSlide = 4;
+            int slideIndex = 0;
+
+            for (int i = 0; i < total; i += itemsPerSlide)
+            {
+                <div class="carousel-item @(slideIndex == 0 ? "active" : "")">
+                    <div class="row">
+                        @foreach (var best in bestSellers.Skip(i).Take(itemsPerSlide))
+                        {
+                            <div class="col-md-3 mb-3">
+                                <div class="card shadow-sm position-relative ">
+                                    <div class="card-ribbon best-seller">BEST SELLER</div>
+                                    <img src="@(string.IsNullOrEmpty(best.ImageUrl) ? "/images/no-image.png" : best.ImageUrl)"
+                                         class="card-img-top" alt="@best.Name" style="height:200px; object-fit:cover;">
+                                    <div class="card-body text-center">
+                                        <h6>@best.Name</h6>
+                                        <p class="fw-bold">
+                                            @if (best.DiscountPrice.HasValue && best.DiscountPrice < best.Price)
+                                            {
+                                                <span class="text-muted text-decoration-line-through">@best.Price.ToString("C")</span>
+                                                <span class="text-danger ms-1">@best.DiscountPrice.Value.ToString("C")</span>
+                                            }
+                                            else
+                                            {
+                                                @best.Price.ToString("C")
+                                            }
+                                        </p>
+                                        <p class="text-muted small">Sold: @best.SoldCount</p>
+                                        <a asp-action="Details" asp-route-id="@best.Id" class="btn btn-outline-primary btn-sm">View</a>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+                slideIndex++;
+            }
+        }
+    </div>
+
+    <!-- ✅ Carousel Indicators (Dots) -->
+    <div class="carousel-indicators position-static mt-2">
+        @for (int i = 0; i < Math.Ceiling((decimal)bestSellers.Count / 4); i++)
+        {
+            <button type="button"
+                    data-bs-target="#bestSellersCarousel"
+                    data-bs-slide-to="@i"
+                    class="@(i == 0 ? "active" : "")"
+                    aria-current="@(i == 0 ? "true" : "false")"
+                    aria-label="Slide @(i + 1)">
+            </button>
+        }
+    </div>
+</div>
+
+
+<!-- 🛍 Product Grid -->
+<div class="row">
+    @if (!Model.Any())
+    {
+        <div class="col-12">
+            <div class="alert alert-warning text-center">No products found matching your criteria.</div>
+        </div>
+    }
+    else
+    {
+        @foreach (var product in Model)
+        {
+            bool isInWishlist = wishlistIds.Contains(product.Id);
+            <div class="col-md-3 mb-4">
+                <div class="card h-100 shadow-sm position-relative ">
+                    @if (product.Stock <= 0)
+                    {
+                        <div class="card-ribbon out-of-stock"><span>SOLD OUT</span></div>
+                    }
+                    else if (product.DiscountPrice != null)
+                    {
+                        <div class="card-ribbon sale"><span>SALE</span></div>
+                    }
+                   
+                        <img src="@(string.IsNullOrEmpty(product.ImageUrl) ? "/images/no-image.png" : product.ImageUrl)"
+                             class="card-img-top" alt="@product.Name" style="height:200px; object-fit:cover;">
+
+
+                        <div class="card-body text-center">
+                            <h5 class="card-title">@product.Name</h5>
+                            <p class="card-text text-muted">@product.Category?.Name</p>
+                            @if (product.DiscountPrice.HasValue && product.DiscountPrice < product.Price)
+                            {
+                                <span class="text-muted text-decoration-line-through">@product.Price.ToString("C")</span>
+                                <span class="fw-bold text-danger ms-2">@product.DiscountPrice.Value.ToString("C")</span>
+                            }
+                            else
+                            {
+                                <span class="text-success fw-bold">@product.Price.ToString("C")</span>
+                            }
+                            @if (product.Reviews != null && product.Reviews.Any())
+                            {
+                                var avgRating = (int)Math.Round(product.Reviews.Average(r => r.Rating));
+                                <p>
+
+                                    <span class="text-warning">
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            @:★
+                                        }
+                                    </span>
+
+                                    <span class="ms-2 text-muted">(@product.Reviews.Count() reviews)</span>
+                                </p>
+
+
+                            }
+                            else
+                            {
+                                <p>No reviews yet. Be the first to review!</p>
+                            }
+
+
+                            <a asp-action="Details" asp-route-id="@product.Id" class="btn btn-outline-primary btn-sm">View Details</a>
+                            <a asp-controller="Cart" asp-action="AddToCart" asp-route-productId="@product.Id" class="btn btn-primary btn-sm mt-2">Add to Cart</a>
+
+                            <!-- Wishlist Button -->
+                        <form asp-controller="Wishlist" asp-action="@(isInWishlist ? "RemoveByProduct" : "Add")" method="post" class="d-inline">
+                            <input type="hidden" name="productId" value="@product.Id" />
+                            <button type="button"
+                                    class="btn wishlist-btn @(isInWishlist ? "btn-danger" : "btn-outline-danger") btn-sm mt-2"
+                                    data-product-id="@product.Id">
+                                @(isInWishlist ? "💔 Remove from Wishlist" : "❤️ Add to Wishlist")
+                            </button>
+
+                        </form>
+                        </div>
+                    
+                </div>
+            </div>
+        }
+    }
+</div>

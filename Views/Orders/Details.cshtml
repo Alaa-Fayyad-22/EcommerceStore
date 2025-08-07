@@ -1,0 +1,64 @@
+﻿@model EcommerceStore.Models.Order
+@{
+    ViewData["Title"] = "Order Details";
+    bool isAdmin = User.IsInRole("Admin") || User.IsInRole("SuperAdmin");
+}
+
+<h2>Order Details - #@Model.Id</h2>
+
+<div class="mb-3">
+    <strong>User:</strong> @Model.User?.Email <br />
+    <strong>Order Date:</strong> @Model.CreatedAt.ToString("yyyy-MM-dd HH:mm") <br />
+    <strong>Status:</strong>
+    <span class="badge
+        @(Model.Status == "Pending" ? "bg-warning text-dark" :
+          Model.Status == "Processing" ? "bg-info text-dark" :
+          Model.Status == "Shipped" ? "bg-primary" :
+          Model.Status == "Delivered" ? "bg-success" : "bg-danger")">
+        @Model.Status
+    </span><br />
+    <strong>Total:</strong> $@Model.TotalAmount
+</div>
+
+<h4>Order Items</h4>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Product</th>
+            <th>Quantity</th>
+            <th>Price</th>
+            <th>Subtotal</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.OrderItems)
+        {
+            <tr>
+                <td>@item.Product.Name</td>
+                <td>@item.Quantity</td>
+                <td>$@item.Price</td>
+                <td>$@(item.Price * item.Quantity)</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (isAdmin)
+{
+    <h4>Update Status</h4>
+    <form asp-action="UpdateStatus" method="post">
+        <input type="hidden" name="id" value="@Model.Id" />
+        <div class="form-group">
+            <select name="status" class="form-control">
+                <option value="Pending" selected="@(Model.Status == "Pending")">Pending</option>
+                <option value="Processing" selected="@(Model.Status == "Processing")">Processing</option>
+                <option value="Shipped" selected="@(Model.Status == "Shipped")">Shipped</option>
+                <option value="Delivered" selected="@(Model.Status == "Delivered")">Delivered</option>
+                <option value="Cancelled" selected="@(Model.Status == "Cancelled")">Cancelled</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary mt-2">Update Status</button>
+    </form>
+}
+
+<a asp-action="Index" class="btn btn-secondary mt-3">Back to Orders</a>

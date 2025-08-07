@@ -1,0 +1,53 @@
+﻿@model EcommerceStore.Models.Cart
+@{
+    ViewData["Title"] = "Checkout";
+    var total = Model.Items.Sum(i => (i.Product.DiscountPrice ?? i.Product.Price) * i.Quantity);
+}
+
+<h2>Checkout</h2>
+
+<form asp-action="Checkout" method="post">
+    <div class="mb-3">
+        <label for="shippingAddress" class="form-label">Shipping Address</label>
+        <input type="text" name="shippingAddress" id="shippingAddress" class="form-control" required />
+    </div>
+
+    <h4>Order Summary</h4>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Qty</th>
+                <th>Price</th>
+                <th>Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Items)
+            {
+                var price = item.Product.DiscountPrice ?? item.Product.Price;
+                <tr>
+                    <td>@item.Product.Name</td>
+                    <td>@item.Quantity</td>
+                    <td>
+                        @if (item.Product.DiscountPrice != null)
+                        {
+                            <span class="text-danger fw-bold">@item.Product.DiscountPrice.Value.ToString("C")</span>
+                            <br />
+                            <small class="text-muted text-decoration-line-through">@item.Product.Price.ToString("C")</small>
+                        }
+                        else
+                        {
+                            <span>@item.Product.Price.ToString("C")</span>
+                        }
+                    </td>
+                    <td>@((price * item.Quantity).ToString("C"))</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <h4>Total: <span class="fw-bold">@total.ToString("C")</span></h4>
+
+    <button type="submit" class="btn btn-primary">Place Order</button>
+</form>
